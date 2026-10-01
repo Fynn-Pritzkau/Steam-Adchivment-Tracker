@@ -1,12 +1,13 @@
 import { ItemView, setIcon, type ViewStateResult, type WorkspaceLeaf } from 'obsidian';
 import type SteamTrackerPlugin from '../main';
 import { pad } from '../util';
+import { renderBoard } from './board';
 import { renderDetail, type DetailState } from './detail';
 import { renderLibrary } from './library';
 
 export const VIEW_TYPE = 'steam-tracker-view';
 
-export type TabName = 'library';
+export type TabName = 'library' | 'board';
 export type Route = { name: TabName } | { name: 'detail'; appid: number };
 
 /** Passed to every page renderer. */
@@ -25,6 +26,8 @@ export class TrackerView extends ItemView {
   private syncInfo: HTMLElement;
   /** Per-game UI state of the detail page (tab, search …), kept across re-renders. */
   detailState = new Map<number, DetailState>();
+  /** Board columns showing all cards instead of the first few. */
+  boardExpanded = new Set<string>();
 
   constructor(
     leaf: WorkspaceLeaf,
@@ -99,7 +102,9 @@ export class TrackerView extends ItemView {
     const ctx = this.ctx;
     const route = this.route;
     if (route.name === 'detail') renderDetail(this.bodyEl, ctx, route.appid);
+    else if (route.name === 'board') renderBoard(this.bodyEl, ctx);
     else renderLibrary(this.bodyEl, ctx);
+    this.bodyEl.toggleClass('is-board', route.name === 'board');
 
     this.bodyEl.scrollTop = scrollTop;
     if (focusKey) {
@@ -118,6 +123,7 @@ export class TrackerView extends ItemView {
     const current = this.route.name === 'detail' ? null : this.route.name;
     const tabDefs: { name: TabName; label: string; icon: string }[] = [
       { name: 'library', label: t.tabLibrary, icon: 'layout-grid' },
+      { name: 'board', label: t.tabBoard, icon: 'kanban' },
     ];
     for (const def of tabDefs) {
       const tab = tabs.createEl('button', {
