@@ -1,4 +1,6 @@
 import { FuzzySuggestModal, moment, normalizePath, Notice, Plugin, TFile, type App, type CachedMetadata } from 'obsidian';
+import { DataCache } from './data/cache';
+import { GameStore } from './data/store';
 import { STRINGS, type Strings } from './i18n';
 import { DEFAULT_SETTINGS, SteamTrackerSettingTab } from './settings';
 import { SteamApi } from './steam/api';
@@ -14,6 +16,8 @@ export default class SteamTrackerPlugin extends Plugin {
   syncing = false;
   steam: SteamApi;
   syncer: Syncer;
+  cache: DataCache;
+  store: GameStore;
 
   private intervalId: number | null = null;
   private moveTimers: Record<string, number> = {};
@@ -24,6 +28,8 @@ export default class SteamTrackerPlugin extends Plugin {
     await this.loadSettings();
     this.steam = new SteamApi(this);
     this.syncer = new Syncer(this);
+    this.cache = new DataCache(this);
+    this.store = new GameStore(this);
 
     this.statusBar = this.addStatusBarItem();
     this.updateStatusBar();
@@ -69,7 +75,10 @@ export default class SteamTrackerPlugin extends Plugin {
     this.registerEvent(
       this.app.vault.on('rename', (file, oldPath) => {
         for (const g of Object.values(this.state.games)) {
-          if (g.file === oldPath) g.file = file.path;
+          if (g.file === oldPath) {
+            g.file = file.path;
+            this.store.notify();
+          }
         }
       })
     );
@@ -148,6 +157,8 @@ export default class SteamTrackerPlugin extends Plugin {
   setSyncing(value: boolean) {
     this.syncing = value;
     this.updateStatusBar();
+    this.store?.trigger('sync-state', value);
+    if (!value) this.store?.notify(0);
   }
 
   setupInterval() {
@@ -187,6 +198,7 @@ export default class SteamTrackerPlugin extends Plugin {
     if (!file.path.startsWith(this.baseFolder + '/')) return;
     const fm = cache?.frontmatter;
     if (!fm?.appid) return;
+    this.store.notify();
     window.clearTimeout(this.moveTimers[file.path]);
     this.moveTimers[file.path] = window.setTimeout(async () => {
       delete this.moveTimers[file.path];

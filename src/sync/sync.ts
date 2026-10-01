@@ -44,11 +44,11 @@ export class Syncer {
   }
 
   /** full = load achievements, light = playtime only (games without achievements), none = only check status/folder */
-  syncMode(game: OwnedGame, fileMap: Map<number, TFile>, force: boolean): SyncMode {
+  syncMode(game: OwnedGame, fileMap: Map<number, TFile>, cachedIds: Set<number>, force: boolean): SyncMode {
     const prev = this.plugin.state.games[game.appid];
     if (force || !prev || !fileMap.has(game.appid) || prev.total == null) return 'full';
     if (prev.total === 0) return prev.playtime !== game.playtime_forever ? 'light' : 'none';
-    if (prev.playtime !== game.playtime_forever || !prev.openTop) return 'full';
+    if (prev.playtime !== game.playtime_forever || !prev.openTop || !cachedIds.has(game.appid)) return 'full';
     return 'none';
   }
 
@@ -74,12 +74,13 @@ export class Syncer {
       const games = await plugin.steam.getOwnedGames(steamid);
       await ensureFolder(plugin, plugin.baseFolder);
       const fileMap = buildFileMap(plugin);
+      const cachedIds = await plugin.cache.listAchievementIds();
 
       const candidates = games.filter((g) => g.playtime_forever > 0 || fileMap.has(g.appid));
 
       for (let i = 0; i < candidates.length; i++) {
         const game = candidates[i];
-        const mode = this.syncMode(game, fileMap, force);
+        const mode = this.syncMode(game, fileMap, cachedIds, force);
         notice?.setMessage(t.noticeProgress(i + 1, candidates.length, game.name));
         try {
           const didWork = await this.processGame(game, steamid, fileMap, mode, ctx);
@@ -99,6 +100,7 @@ export class Syncer {
       plugin.state.unplayed = unplayed;
 
       plugin.state.lastSync = Date.now();
+      await plugin.cache.recordSnapshot(plugin.state.games);
       await updateDashboard(plugin, unplayed, false);
       await updateFocusPage(plugin);
       await cleanUpOtherLanguages(plugin);
@@ -172,6 +174,7 @@ export class Syncer {
     let total: number, unlocked: number, perfect: boolean, openTop;
     if (mode === 'full') {
       const achievements = await plugin.steam.getAchievements(appid, steamid);
+      await plugin.cache.saveAchievements(appid, achievements);
       total = achievements.length;
       unlocked = achievements.filter((a) => a.achieved).length;
       perfect = total > 0 && unlocked === total;
