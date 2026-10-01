@@ -6,6 +6,11 @@ An Obsidian plugin that syncs your Steam library into your vault. Every game you
 
 ## Features
 
+- **Steam Tracker view.** A dedicated tab (gamepad icon in the ribbon) with four pages:
+  - **Library:** your games as a cover grid with progress rings. Filter by status and genre, search, and sort by recently played, progress, "almost done", playtime or name.
+  - **Board:** Kanban columns for Up Next, Playing, Paused, Completed and Dropped. Drag a card to another column to change the game's status, and its note moves to the matching folder. On mobile, use the `⋯` menu instead.
+  - **Game details:** large cover, facts, the status dropdown and the full achievement list. You can filter it, search it and sort it by rarity, date or name. Hidden achievements stay covered until you click them. Your "My notes" section is shown next to the list.
+  - **Statistics:** totals, achievements per month, most played games, playtime by genre, your rarest unlocks and hours played per day.
 - **One note per game** once it has any playtime. Each note shows the cover art, a progress bar and the achievements as checkboxes. Open achievements are sorted by how many players have them, completed ones by unlock date.
 - **Your own notes are safe.** Only the block between `<!-- steam-sync:start -->` and `<!-- steam-sync:end -->` is ever rewritten.
 - **Automatic status folders:**
@@ -48,6 +53,8 @@ The first sync takes a few minutes for large libraries. Genres are fetched once 
 
 | Command | What it does |
 |---|---|
+| Open Steam Tracker | Opens the view with library, board and statistics |
+| Show this game in Steam Tracker | Opens the detail page for the active game note |
 | Sync now | Syncs games whose playtime changed |
 | Full resync (ignore cache) | Re-fetches everything |
 | Sync this game | Syncs only the active note |
@@ -80,4 +87,26 @@ tags: [game, genre/rpg]
 
 - Your API key is stored in plain text in `data.json`, which is excluded via `.gitignore`. Be careful if you sync your vault anywhere public.
 - Switching the plugin language moves your notes into the translated folders on the next sync. Command names update after reloading Obsidian.
-- There's no build step: `main.js` is plain CommonJS.
+- The plugin keeps a local cache next to itself in `cache/`. It holds the full achievement lists and a daily playtime snapshot for the "hours per day" chart. Steam has no playtime history, so that chart starts filling from the day you install this version. "Achievements per month" works retroactively.
+
+## Development
+
+The plugin is written in TypeScript and bundled with esbuild. The built `main.js` is committed, so installing via `git clone` needs no build step.
+
+```bash
+npm install
+npm run dev     # rebuilds main.js on every change
+npm run build   # type check + minified production build
+```
+
+Sources live in `src/`:
+
+| Path | Contents |
+|---|---|
+| `main.ts` | Plugin class, commands, events |
+| `steam/api.ts` | Steam Web API and Store calls |
+| `sync/sync.ts` | Sync logic and status rules |
+| `vault/` | Game notes, the dashboard and the Up Next page |
+| `data/` | Achievement cache, history, `GameStore` read model |
+| `ui/` | The view: library, board, detail page, statistics, charts |
+| `i18n.ts` | English and German strings |

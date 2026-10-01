@@ -4,10 +4,11 @@ import { pad } from '../util';
 import { renderBoard } from './board';
 import { renderDetail, type DetailState } from './detail';
 import { renderLibrary } from './library';
+import { renderStats } from './stats';
 
 export const VIEW_TYPE = 'steam-tracker-view';
 
-export type TabName = 'library' | 'board';
+export type TabName = 'library' | 'board' | 'stats';
 export type Route = { name: TabName } | { name: 'detail'; appid: number };
 
 /** Passed to every page renderer. */
@@ -103,6 +104,7 @@ export class TrackerView extends ItemView {
     const route = this.route;
     if (route.name === 'detail') renderDetail(this.bodyEl, ctx, route.appid);
     else if (route.name === 'board') renderBoard(this.bodyEl, ctx);
+    else if (route.name === 'stats') renderStats(this.bodyEl, ctx);
     else renderLibrary(this.bodyEl, ctx);
     this.bodyEl.toggleClass('is-board', route.name === 'board');
 
@@ -124,6 +126,7 @@ export class TrackerView extends ItemView {
     const tabDefs: { name: TabName; label: string; icon: string }[] = [
       { name: 'library', label: t.tabLibrary, icon: 'layout-grid' },
       { name: 'board', label: t.tabBoard, icon: 'kanban' },
+      { name: 'stats', label: t.tabStats, icon: 'bar-chart-3' },
     ];
     for (const def of tabDefs) {
       const tab = tabs.createEl('button', {
@@ -131,7 +134,7 @@ export class TrackerView extends ItemView {
         attr: { role: 'tab', 'aria-selected': String(current === def.name) },
       });
       setIcon(tab.createSpan({ cls: 'st-tab-icon' }), def.icon);
-      tab.createSpan({ text: def.label });
+      tab.createSpan({ cls: 'st-tab-label', text: def.label });
       tab.addEventListener('click', () => {
         if (this.route.name !== def.name) this.navigate({ name: def.name });
       });
@@ -150,7 +153,7 @@ export class TrackerView extends ItemView {
     const syncing = this.plugin.syncing;
     this.syncBtn.empty();
     setIcon(this.syncBtn.createSpan({ cls: 'st-sync-icon' + (syncing ? ' is-spinning' : '') }), 'refresh-cw');
-    this.syncBtn.createSpan({ text: syncing ? t.syncingShort : t.btnSync });
+    this.syncBtn.createSpan({ cls: 'st-sync-label', text: syncing ? t.syncingShort : t.btnSync });
     this.syncBtn.disabled = syncing;
     const last = this.plugin.state.lastSync;
     if (last) {

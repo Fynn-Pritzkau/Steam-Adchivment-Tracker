@@ -209,6 +209,25 @@ const en = {
   boardShowLess: 'Show less',
   boardDropHere: 'Drop games here',
   boardOpenDetails: 'Show details',
+
+  statTotalAch: 'Achievements unlocked',
+  statPerfect: 'Perfect games',
+  statAvgCompletion: 'Avg. completion',
+  statHours: 'Hours played',
+  statGames: 'Games started',
+  chartPerMonth: 'Achievements per month',
+  chartPerMonthHint: 'Last 24 months',
+  chartTopPlaytime: 'Most played',
+  chartGenres: 'Playtime by genre',
+  chartOther: 'Other',
+  chartRarest: 'Rarest unlocked achievements',
+  chartDaily: 'Hours played per day',
+  chartDailyHint: 'Last 30 days',
+  chartCollecting: 'Collecting data from now on – check back after syncs on a few different days.',
+  chartNoData: 'No data yet.',
+  chartMissingCache: (n: number) =>
+    `${n} game(s) have no cached achievement details yet – they are included after the next sync.`,
+  achievementsCount: (n: number) => `${n} achievements`,
 };
 
 export type Strings = typeof en;
@@ -424,6 +443,25 @@ const de: Strings = {
   boardShowLess: 'Weniger anzeigen',
   boardDropHere: 'Spiele hierher ziehen',
   boardOpenDetails: 'Details anzeigen',
+
+  statTotalAch: 'Achievements freigeschaltet',
+  statPerfect: 'Perfect Games',
+  statAvgCompletion: 'Ø Fortschritt',
+  statHours: 'Stunden gespielt',
+  statGames: 'Spiele gestartet',
+  chartPerMonth: 'Achievements pro Monat',
+  chartPerMonthHint: 'Letzte 24 Monate',
+  chartTopPlaytime: 'Meistgespielt',
+  chartGenres: 'Spielzeit nach Genre',
+  chartOther: 'Sonstige',
+  chartRarest: 'Seltenste freigeschaltete Achievements',
+  chartDaily: 'Gespielte Stunden pro Tag',
+  chartDailyHint: 'Letzte 30 Tage',
+  chartCollecting: 'Sammelt ab jetzt Daten – schau nach Syncs an ein paar verschiedenen Tagen wieder rein.',
+  chartNoData: 'Noch keine Daten.',
+  chartMissingCache: (n) =>
+    `Für ${n} Spiel(e) sind noch keine Achievement-Details gespeichert – sie fließen nach dem nächsten Sync mit ein.`,
+  achievementsCount: (n) => `${n} Achievements`,
 };
 
 export const STRINGS: Record<'en' | 'de', Strings> = { en, de };
