@@ -45,3 +45,8 @@ export function replaceOrAppend(content: string, regex: RegExp, block: string): 
 export function coverUrl(appid: number): string {
   return `https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${appid}/header.jpg`;
 }
+
+/** Newer games keep their header under a hashed path; the wide library hero is a reliable fallback. */
+export function heroUrl(appid: number): string {
+  return `https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${appid}/library_hero.jpg`;
+}

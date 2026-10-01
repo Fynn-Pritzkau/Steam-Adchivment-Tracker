@@ -51,8 +51,16 @@ export function statusBadge(parent: HTMLElement, status: string, t: Strings): HT
 /** Cover image with a text fallback when Steam has no header image. */
 export function coverImage(parent: HTMLElement, game: Game, cls = 'st-cover'): HTMLElement {
   const wrap = parent.createDiv({ cls });
-  const img = wrap.createEl('img', { attr: { src: game.cover, alt: game.name, loading: 'lazy', draggable: 'false' } });
+  const candidates = game.covers.slice();
+  const img = wrap.createEl('img', {
+    attr: { src: candidates.shift(), alt: game.name, loading: 'lazy', draggable: 'false' },
+  });
   img.addEventListener('error', () => {
+    const next = candidates.shift();
+    if (next) {
+      img.src = next;
+      return;
+    }
     img.remove();
     wrap.addClass('is-missing');
     wrap.createDiv({ cls: 'st-cover-fallback', text: game.name });

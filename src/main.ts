@@ -137,9 +137,8 @@ export default class SteamTrackerPlugin extends Plugin {
   /** Changes a game's status via its note's frontmatter; the note is then moved by onMetadataChanged. */
   async setGameStatus(appid: number, status: string) {
     const g = this.state.games[appid];
-    if (!g) return;
-    const file = this.app.vault.getAbstractFileByPath(g.file);
-    if (!(file instanceof TFile)) return;
+    const file = g && this.store.findNote(appid);
+    if (!file) return;
     await this.app.fileManager.processFrontMatter(file, (fm) => {
       fm.status = status;
     });

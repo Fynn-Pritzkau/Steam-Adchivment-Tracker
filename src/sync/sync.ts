@@ -100,10 +100,23 @@ export class Syncer {
       plugin.state.unplayed = unplayed;
 
       plugin.state.lastSync = Date.now();
-      await plugin.cache.recordSnapshot(plugin.state.games);
-      await updateDashboard(plugin, unplayed, false);
-      await updateFocusPage(plugin);
-      await cleanUpOtherLanguages(plugin);
+      // Save the per-game state first: notes may already have been moved, and a
+      // failure in one of the page updates below must not lose their new paths.
+      await plugin.saveAll();
+      const steps: [string, () => Promise<void>][] = [
+        ['history', () => plugin.cache.recordSnapshot(plugin.state.games)],
+        ['dashboard', () => updateDashboard(plugin, unplayed, false)],
+        ['focus page', () => updateFocusPage(plugin)],
+        ['clean-up', () => cleanUpOtherLanguages(plugin)],
+      ];
+      for (const [name, step] of steps) {
+        try {
+          await step();
+        } catch (e) {
+          console.error('[steam-tracker]', name, e);
+          errors.push(`${name}: ${e.message}`);
+        }
+      }
       await plugin.saveAll();
 
       let msg = t.noticeSyncDone(updated, unplayed.length);
@@ -222,7 +235,9 @@ export class Syncer {
         fm.completion = total ? Math.floor((unlocked / total) * 100) : null;
         fm.last_played = fmtDate(lastPlayed);
         fm.perfect = perfect;
-        fm.cover = cover;
+        // the store's header URL is exact (newer games use hashed paths); otherwise keep what's there
+        if (store?.header) fm.cover = store.header;
+        else if (!fm.cover) fm.cover = cover;
         if (store) {
           fm.genres = store.genres || [];
           if (store.developer) fm.developer = store.developer;

@@ -14,6 +14,8 @@ function gameLink(g: GameState): string {
 
 export async function updateFocusPage(plugin: SteamTrackerPlugin): Promise<void> {
   const t = plugin.t;
+  // correct stale note paths before building links
+  for (const id of Object.keys(plugin.state.games)) plugin.store.findNote(Number(id));
   const all = Object.values(plugin.state.games).filter((g) => g.file);
   const withAch = all.filter((g) => g.total > 0);
   const progress = (g: GameState) =>
@@ -128,7 +130,16 @@ export async function updateDashboard(
   ].join('\n');
 
   let existing = plugin.app.vault.getAbstractFileByPath(path);
-  const outdated = (state.dashboardVersion || 1) < DASHBOARD_VERSION || (state.dashboardLang || 'de') !== plugin.lang;
+  let outdated = (state.dashboardVersion || 1) < DASHBOARD_VERSION || (state.dashboardLang || 'de') !== plugin.lang;
+  if (outdated && !forceReset && existing instanceof TFile) {
+    // The current template may already be there if an earlier sync stopped before saving its state.
+    const content = await plugin.app.vault.cachedRead(existing);
+    if (content.includes(t.dashPlaying) && content.includes(t.dashGenres)) {
+      state.dashboardVersion = DASHBOARD_VERSION;
+      state.dashboardLang = plugin.lang;
+      outdated = false;
+    }
+  }
   if (existing instanceof TFile && (forceReset || outdated)) {
     let backup = normalizePath(`${folder}/${t.dashboardBackup}.md`);
     if (plugin.app.vault.getAbstractFileByPath(backup)) {

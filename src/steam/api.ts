@@ -115,6 +115,7 @@ export class SteamApi {
     const d = entry.data;
     const year = (d.release_date?.date || '').match(/\d{4}/);
     return {
+      header: typeof d.header_image === 'string' ? d.header_image.split('?')[0] : null,
       genres: (d.genres || []).map((g: any) => oneLine(g.description)).filter(Boolean),
       developer: (d.developers || [])[0] || null,
       release_year: year ? Number(year[0]) : null,

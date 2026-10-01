@@ -82,6 +82,7 @@ export interface OwnedGame {
 }
 
 export interface StoreDetails {
+  header?: string | null;
   genres?: string[];
   developer?: string | null;
   release_year?: number | null;
