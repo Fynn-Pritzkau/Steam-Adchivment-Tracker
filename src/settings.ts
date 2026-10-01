@@ -2,7 +2,16 @@ import { App, PluginSettingTab, Setting } from 'obsidian';
 import type SteamTrackerPlugin from './main';
 import type { Settings } from './types';
 
+export const DEFAULT_UI = {
+  statuses: [],
+  genre: '',
+  search: '',
+  sort: 'recent',
+  showNoAch: false,
+} as Settings['ui'];
+
 export const DEFAULT_SETTINGS: Settings = {
+  ui: DEFAULT_UI,
   uiLanguage: 'auto',
   apiKey: '',
   steamId: '',

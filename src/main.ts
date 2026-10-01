@@ -2,10 +2,11 @@ import { FuzzySuggestModal, moment, normalizePath, Notice, Plugin, TFile, type A
 import { DataCache } from './data/cache';
 import { GameStore } from './data/store';
 import { STRINGS, type Strings } from './i18n';
-import { DEFAULT_SETTINGS, SteamTrackerSettingTab } from './settings';
+import { DEFAULT_SETTINGS, DEFAULT_UI, SteamTrackerSettingTab } from './settings';
 import { SteamApi } from './steam/api';
 import { Syncer } from './sync/sync';
 import type { PluginState, Settings, UnplayedGame } from './types';
+import { TrackerView, VIEW_TYPE, type Route } from './ui/view';
 import { pad } from './util';
 import { moveGameFile } from './vault/notes';
 import { updateDashboard, updateFocusPage } from './vault/pages';
@@ -22,6 +23,7 @@ export default class SteamTrackerPlugin extends Plugin {
   private intervalId: number | null = null;
   private moveTimers: Record<string, number> = {};
   private focusTimer: number | null = null;
+  private saveTimer: number | null = null;
   private statusBar: HTMLElement;
 
   async onload() {
@@ -34,9 +36,25 @@ export default class SteamTrackerPlugin extends Plugin {
     this.statusBar = this.addStatusBarItem();
     this.updateStatusBar();
 
+    this.registerView(VIEW_TYPE, (leaf) => new TrackerView(leaf, this));
+
     const t = this.t;
-    this.addRibbonIcon('gamepad-2', t.ribbonSync, () => this.syncer.syncAll(false));
+    this.addRibbonIcon('gamepad-2', t.cmdOpenView, () => this.activateView());
+    this.addRibbonIcon('refresh-cw', t.ribbonSync, () => this.syncer.syncAll(false));
     this.addRibbonIcon('list-todo', t.ribbonFocus, () => this.openFocusPage());
+
+    this.addCommand({ id: 'open-view', name: t.cmdOpenView, callback: () => this.activateView() });
+    this.addCommand({
+      id: 'open-game-in-view',
+      name: t.cmdOpenGameInView,
+      checkCallback: (checking) => {
+        const file = this.app.workspace.getActiveFile();
+        const appid = file && this.app.metadataCache.getFileCache(file)?.frontmatter?.appid;
+        if (!appid) return false;
+        if (!checking) this.activateView({ name: 'detail', appid: Number(appid) });
+        return true;
+      },
+    });
 
     this.addCommand({ id: 'sync-now', name: t.cmdSync, callback: () => this.syncer.syncAll(false) });
     this.addCommand({ id: 'sync-full', name: t.cmdSyncFull, callback: () => this.syncer.syncAll(true) });
@@ -98,12 +116,52 @@ export default class SteamTrackerPlugin extends Plugin {
     if (this.intervalId) window.clearInterval(this.intervalId);
     Object.values(this.moveTimers).forEach((timer) => window.clearTimeout(timer));
     if (this.focusTimer) window.clearTimeout(this.focusTimer);
+    if (this.saveTimer) {
+      window.clearTimeout(this.saveTimer);
+      this.saveAll();
+    }
+  }
+
+  /** Opens (or focuses) the Steam Tracker view, optionally on a given page. */
+  async activateView(route?: Route) {
+    const { workspace } = this.app;
+    let leaf = workspace.getLeavesOfType(VIEW_TYPE)[0];
+    if (!leaf) {
+      leaf = workspace.getLeaf('tab');
+      await leaf.setViewState({ type: VIEW_TYPE, active: true });
+    }
+    await workspace.revealLeaf(leaf);
+    if (route && leaf.view instanceof TrackerView) leaf.view.navigate(route);
+  }
+
+  /** Changes a game's status via its note's frontmatter; the note is then moved by onMetadataChanged. */
+  async setGameStatus(appid: number, status: string) {
+    const g = this.state.games[appid];
+    if (!g) return;
+    const file = this.app.vault.getAbstractFileByPath(g.file);
+    if (!(file instanceof TFile)) return;
+    await this.app.fileManager.processFrontMatter(file, (fm) => {
+      fm.status = status;
+    });
+    g.status = status;
+    this.store.notify(0);
+    this.requestSave();
+  }
+
+  /** Debounced save for frequent UI changes (filters, sorting). */
+  requestSave() {
+    if (this.saveTimer) window.clearTimeout(this.saveTimer);
+    this.saveTimer = window.setTimeout(() => {
+      this.saveTimer = null;
+      this.saveAll();
+    }, 1000);
   }
 
   async loadSettings() {
     const data = (await this.loadData()) || {};
     const saved = data.settings || null;
     this.settings = Object.assign({}, DEFAULT_SETTINGS, saved);
+    this.settings.ui = Object.assign({}, DEFAULT_UI, saved?.ui);
     // Installs from before the translation were German-only – keep them German.
     if (saved && saved.uiLanguage === undefined) this.settings.uiLanguage = 'de';
     this.state = Object.assign(

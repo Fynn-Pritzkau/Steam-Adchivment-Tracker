@@ -4,7 +4,19 @@ export const STATUSES: Status[] = ['next', 'playing', 'paused', 'completed', 'dr
 
 export type SyncMode = 'full' | 'light' | 'none';
 
+export type LibrarySort = 'recent' | 'progress' | 'playtime' | 'name' | 'almost';
+
+/** View preferences that should survive restarts. */
+export interface UiPrefs {
+  statuses: string[];
+  genre: string;
+  search: string;
+  sort: LibrarySort;
+  showNoAch: boolean;
+}
+
 export interface Settings {
+  ui: UiPrefs;
   uiLanguage: 'auto' | 'de' | 'en';
   apiKey: string;
   steamId: string;
