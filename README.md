@@ -1,53 +1,83 @@
-# Steam Achievement Tracker für Obsidian
+# Steam Achievement Tracker for Obsidian
 
-Ein Obsidian-Plugin, das deine Steam-Bibliothek automatisch in deinen Vault synchronisiert: Für jedes gespielte Spiel legt es eine Note mit Spielzeit, Fortschritt und allen offenen bzw. erledigten Achievements an.
+🇩🇪 [Deutsche Version](README.de.md)
+
+An Obsidian plugin that syncs your Steam library into your vault. Every game you've played gets its own note with playtime, progress and a checklist of every achievement, both unlocked and still open.
 
 ## Features
 
-- **Eine Note pro Spiel**, sobald es Spielzeit hat: Cover, Fortschrittsbalken, Achievements als Checkboxen. Offene sind nach Seltenheit sortiert, erledigte nach Datum.
-- **Eigene Notizen bleiben erhalten.** Überschrieben wird nur der Bereich zwischen `<!-- steam-sync:start -->` und `<!-- steam-sync:end -->`.
-- **Automatische Status-Ordner:**
+- **One note per game** once it has any playtime. Each note shows the cover art, a progress bar and the achievements as checkboxes. Open achievements are sorted by how many players have them, completed ones by unlock date.
+- **Your own notes are safe.** Only the block between `<!-- steam-sync:start -->` and `<!-- steam-sync:end -->` is ever rewritten.
+- **Automatic status folders:**
   ```
   Games/
-    Als Nächstes.md      ← Fokus-Seite
-    _Dashboard.md        ← Dataview-Übersicht
-    0 Als Nächstes/  1 Aktiv/  2 Pausiert/
-    3 Abgeschlossen/ 4 Abgebrochen/ 5 Ohne Achievements/
+    Up Next.md          ← focus page
+    _Dashboard.md       ← Dataview overview
+    0 Up Next/  1 Playing/  2 Paused/
+    3 Completed/  4 Dropped/  5 No Achievements/
   ```
-  Ein Spiel, das du 30 Tage nicht gespielt hast, wird pausiert. Startest du es wieder, wird es aktiv. Bei 100 % wird es abgeschlossen. Ändert man `status` von Hand, wird die Note automatisch verschoben.
-- **Fokus-Seite „Als Nächstes“:**
-  - zuletzt gespielt
-  - geplante Spiele
-  - ⚡ Quick Wins (die häufigsten offenen Achievements über alle aktiven Spiele)
-  - fast geschafft
-  - lange nicht angefasst
-- **Genres und Tags** aus dem Steam-Store: `genres`, `developer`, `release_year`, `metacritic`, `#genre/...`
-- **Backlog:** Ungespielte Spiele stehen als Liste im Dashboard. Mit „Backlog-Spiel einplanen“ wird daraus eine Note.
-- **Sync** beim Start, im Intervall (Standard 60 min) oder per Ribbon-Icon bzw. Befehl.
+  - A game you haven't played for 30 days is marked paused. When you start it again, it goes back to playing.
+  - A game at 100 % is marked completed.
+  - Edit `status` by hand and the note moves to the matching folder on its own.
+  - Games without achievements live in their own folder and stay out of the focus page and dashboard tables.
+- **"Up Next" focus page:**
+  - recently played games
+  - games planned next
+  - ⚡ quick wins: the most commonly unlocked achievements you're still missing, across all active games
+  - games that are almost done
+  - paused games you haven't touched in a while
+- **Genres and tags** from the Steam Store: `genres`, `developer`, `release_year`, `metacritic` and `#genre/...` tags.
+- **Backlog:** unplayed games are listed on the dashboard. "Plan a backlog game" turns one of them into a note.
+- **Sync** on startup, on an interval (60 min by default), or from the ribbon icon or a command.
+- **English and German.** The plugin language can be switched in the settings and defaults to Obsidian's language.
 
 ## Installation
 
-1. Den Ordner nach `<Vault>/.obsidian/plugins/steam-tracker/` kopieren oder klonen:
+1. Clone or copy this repository into `<vault>/.obsidian/plugins/steam-tracker/`:
    ```bash
-   git clone https://github.com/Fynn-Pritzkau/Steam-Adchivment-Tracker.git "<Vault>/.obsidian/plugins/steam-tracker"
+   git clone https://github.com/Fynn-Pritzkau/Steam-Adchivment-Tracker.git "<vault>/.obsidian/plugins/steam-tracker"
    ```
-2. In Obsidian: Einstellungen → Community-Plugins → eingeschränkten Modus aus → **Dataview** installieren → **Steam Tracker** aktivieren.
-3. Einen Steam-API-Key holen: https://steamcommunity.com/dev/apikey
-4. In Steam die Privatsphäre-Einstellung **„Spieldetails: Öffentlich“** setzen.
-5. In den Plugin-Einstellungen Key und Profil (SteamID64, Profil-URL oder Profilname) eintragen und synchronisieren.
+2. In Obsidian, go to Settings → Community plugins, turn off Restricted mode, install and enable **Dataview**, then enable **Steam Tracker**.
+3. Get a free Steam Web API key at https://steamcommunity.com/dev/apikey.
+4. In Steam, set **Privacy Settings → "Game details: Public"**. Steam doesn't expose your achievements otherwise.
+5. Open the plugin settings, enter your API key and your profile (SteamID64, profile URL or custom profile name), then hit **Sync now**.
 
-## Befehle
+The first sync takes a few minutes for large libraries. Genres are fetched once per game, and the Steam Store only allows about one request every 1.5 seconds. After that, syncs only touch games whose playtime has changed.
 
-| Befehl | Funktion |
+## Commands
+
+| Command | What it does |
 |---|---|
-| Jetzt synchronisieren | Sync nur geänderter Spiele (nach Spielzeit) |
-| Alles neu synchronisieren | Ignoriert den Cache |
-| Dieses Spiel synchronisieren | Nur die aktive Note |
-| Als Nächstes öffnen | Öffnet die Fokus-Seite |
-| Backlog-Spiel einplanen | Ungespieltes Spiel nach „0 Als Nächstes“ holen |
-| Dashboard zurücksetzen | Dashboard neu erzeugen (altes wird gesichert) |
+| Sync now | Syncs games whose playtime changed |
+| Full resync (ignore cache) | Re-fetches everything |
+| Sync this game | Syncs only the active note |
+| Open Up Next | Opens the focus page |
+| Plan a backlog game | Moves an unplayed game into "0 Up Next" |
+| Reset dashboard | Regenerates the dashboard (the old one is kept as a backup) |
 
-## Hinweise
+## Frontmatter
 
-- Der API-Key wird im Klartext in `data.json` gespeichert. Die Datei ist per `.gitignore` ausgeschlossen.
-- Kein Build-Schritt nötig: `main.js` ist reines CommonJS.
+Each game note has these properties, so you can query them with Dataview:
+
+```yaml
+appid: 1091500
+title: Cyberpunk 2077
+status: playing        # next | playing | paused | completed | dropped
+playtime_hours: 87.4
+achievements_unlocked: 32
+achievements_total: 57
+completion: 56
+last_played: 2026-09-28
+perfect: false
+genres: [RPG]
+developer: CD PROJEKT RED
+release_year: 2020
+metacritic: 86
+tags: [game, genre/rpg]
+```
+
+## Notes
+
+- Your API key is stored in plain text in `data.json`, which is excluded via `.gitignore`. Be careful if you sync your vault anywhere public.
+- Switching the plugin language moves your notes into the translated folders on the next sync. Command names update after reloading Obsidian.
+- There's no build step: `main.js` is plain CommonJS.
