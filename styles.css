@@ -1,0 +1,8 @@
+.markdown-rendered progress,
+.markdown-source-view progress,
+.dataview progress {
+  width: 120px;
+  height: 10px;
+  vertical-align: middle;
+  accent-color: var(--interactive-accent);
+}

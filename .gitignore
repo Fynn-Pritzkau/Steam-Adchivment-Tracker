@@ -1,0 +1,6 @@
+# Enthält den Steam-API-Key und den Sync-Cache – niemals committen!
+data.json
+
+node_modules/
+.DS_Store
+Thumbs.db

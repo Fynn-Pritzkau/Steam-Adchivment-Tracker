@@ -1,0 +1,9 @@
+{
+  "id": "steam-tracker",
+  "name": "Steam Tracker",
+  "version": "1.0.0",
+  "minAppVersion": "1.4.0",
+  "description": "Synchronisiert Steam-Spiele, Spielzeit und Achievements als Notes in den Vault.",
+  "author": "Fynn",
+  "isDesktopOnly": false
+}
