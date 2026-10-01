@@ -1,0 +1,20 @@
+{
+  "name": "steam-tracker",
+  "version": "2.0.0",
+  "description": "Obsidian plugin that syncs Steam games, playtime and achievements into your vault.",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "dev": "node esbuild.config.mjs",
+    "build": "tsc --noEmit && node esbuild.config.mjs production",
+    "typecheck": "tsc --noEmit"
+  },
+  "author": "Fynn Pritzkau",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^26.6.3",
+    "esbuild": "^0.28.2",
+    "obsidian": "^1.13.1",
+    "typescript": "^7.0.2"
+  }
+}

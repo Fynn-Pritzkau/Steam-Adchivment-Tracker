@@ -1,5 +1,8 @@
-# Enthält den Steam-API-Key und den Sync-Cache – niemals committen!
+# Contains the Steam API key and sync state – never commit!
 data.json
+
+# Local caches written by the plugin (achievements, history)
+cache/
 
 node_modules/
 .DS_Store
